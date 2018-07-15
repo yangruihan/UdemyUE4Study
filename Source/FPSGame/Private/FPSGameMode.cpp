@@ -4,6 +4,7 @@
 #include "FPSHUD.h"
 #include "FPSCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
 
 AFPSGameMode::AFPSGameMode()
 {
@@ -19,7 +20,27 @@ void AFPSGameMode::MissionComplete(APawn* pawn)
 {
     if (pawn)
     {
+        // Disable character input
         pawn->DisableInput(nullptr);
+
+        // Change view target
+        TArray<AActor*> ViewTargets;
+        UGameplayStatics::GetAllActorsOfClass(this, ViewTargetClass, ViewTargets);
+
+        if (ViewTargets.Num() > 0)
+        {
+            const auto viewTarget = ViewTargets[0];
+            auto characterCtrl = Cast<APlayerController>(pawn->GetController());
+
+            if (viewTarget && characterCtrl)
+            {
+                characterCtrl->SetViewTargetWithBlend(viewTarget, 0.8f, EViewTargetBlendFunction::VTBlend_Cubic);
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Log, TEXT("Viewtarget get error, please check ViewTargetClass set"));
+        }
     }
 
     OnMissionCompleted(pawn);

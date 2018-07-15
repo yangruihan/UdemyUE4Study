@@ -11,6 +11,11 @@ class AFPSGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
+protected:
+
+    UPROPERTY(EditDefaultsOnly, Category = "Values")
+    TSubclassOf<AActor> ViewTargetClass;
+
 public:
 
 	AFPSGameMode();
@@ -20,6 +25,3 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "GameMode")
     void OnMissionCompleted(APawn* pawn);
 };
-
-
-
