@@ -2,6 +2,7 @@
 
 #include "FPSExtractionZone.h"
 #include "Components/BoxComponent.h"
+#include "Components/DecalComponent.h"
 
 // Sets default values
 AFPSExtractionZone::AFPSExtractionZone()
@@ -13,6 +14,11 @@ AFPSExtractionZone::AFPSExtractionZone()
     ColliderComp->SetBoxExtent(FVector(200));
     ColliderComp->SetHiddenInGame(false);
     ColliderComp->OnComponentBeginOverlap.AddDynamic(this, &AFPSExtractionZone::OnCompBeginOverlap);
+    RootComponent = ColliderComp;
+
+    DecalComponent = CreateDefaultSubobject<UDecalComponent>(TEXT("DecalComp"));
+    DecalComponent->DecalSize = FVector(200);
+    DecalComponent->SetupAttachment(RootComponent);
 }
 
 void AFPSExtractionZone::OnCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
