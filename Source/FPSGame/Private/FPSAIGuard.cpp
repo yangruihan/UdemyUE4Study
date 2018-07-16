@@ -3,6 +3,8 @@
 #include "FPSAIGuard.h"
 #include "Perception/PawnSensingComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "TimerManager.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
@@ -11,12 +13,14 @@ AFPSAIGuard::AFPSAIGuard()
 
     SensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("SensingComp"));
     SensingComp->OnSeePawn.AddDynamic(this, &AFPSAIGuard::OnSeePawn);
+    SensingComp->OnHearNoise.AddDynamic(this, &AFPSAIGuard::OnHeardNoise);
 }
 
 // Called when the game starts or when spawned
 void AFPSAIGuard::BeginPlay()
 {
 	Super::BeginPlay();
+    OriginRotator = GetActorRotation();
 }
 
 void AFPSAIGuard::OnSeePawn(APawn* Pawn)
@@ -24,9 +28,25 @@ void AFPSAIGuard::OnSeePawn(APawn* Pawn)
     if (!Pawn)
         return;
 
-    UE_LOG(LogTemp, Log, TEXT("Seeeeee"));
+    DrawDebugSphere(GetWorld(), Pawn->GetActorLocation(), 32.0f, 12, FColor::Red, false, 10);
+}
 
-    DrawDebugSphere(GetWorld(), Pawn->GetActorLocation(), 32.0f, 12, FColor::Blue, false, 10);
+void AFPSAIGuard::OnHeardNoise(APawn* Pawn, const FVector& Location, float Volume)
+{
+    DrawDebugSphere(GetWorld(), Location, 32.0f, 12, FColor::Blue, false, 10);
+
+    auto newRotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Location);
+    newRotator.Pitch = 0;
+    newRotator.Roll = 0;
+    SetActorRotation(newRotator);
+
+    GetWorldTimerManager().ClearTimer(TimerHanlder_ResetRotation);
+    GetWorldTimerManager().SetTimer(TimerHanlder_ResetRotation, this, &AFPSAIGuard::OnTimerResetRotation, 3, false);
+}
+
+void AFPSAIGuard::OnTimerResetRotation()
+{
+    SetActorRotation(OriginRotator);
 }
 
 void AFPSAIGuard::Tick(float DeltaSeconds)

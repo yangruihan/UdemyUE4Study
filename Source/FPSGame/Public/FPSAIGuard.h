@@ -28,6 +28,15 @@ protected:
     UFUNCTION()
     void  OnSeePawn(APawn* Pawn);
 
+    UFUNCTION()
+    void OnHeardNoise(APawn* Pawn, const FVector& Location, float Volume);
+
+    FRotator OriginRotator;
+    FTimerHandle TimerHanlder_ResetRotation;
+
+    UFUNCTION()
+    void OnTimerResetRotation();
+
 public:
     virtual void Tick(float DeltaSeconds) override;
 };
