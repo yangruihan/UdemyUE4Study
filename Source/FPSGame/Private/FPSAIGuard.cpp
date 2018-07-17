@@ -30,7 +30,9 @@ void AFPSAIGuard::OnSeePawn(APawn* Pawn)
     if (!Pawn)
         return;
 
-    DrawDebugSphere(GetWorld(), Pawn->GetActorLocation(), 32.0f, 12, FColor::Red, false, 10);
+    // DrawDebugSphere(GetWorld(), Pawn->GetActorLocation(), 32.0f, 12, FColor::Red, false, 10);
+
+    SetState(EAIGuardState::Alerted);
 
     auto mode = Cast<AFPSGameMode>(GetWorld()->GetAuthGameMode());
     if (mode)
@@ -41,7 +43,9 @@ void AFPSAIGuard::OnSeePawn(APawn* Pawn)
 
 void AFPSAIGuard::OnHeardNoise(APawn* Pawn, const FVector& Location, float Volume)
 {
-    DrawDebugSphere(GetWorld(), Location, 32.0f, 12, FColor::Blue, false, 10);
+    // DrawDebugSphere(GetWorld(), Location, 32.0f, 12, FColor::Blue, false, 10);
+
+    SetState(EAIGuardState::Suspicious);
 
     auto newRotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Location);
     newRotator.Pitch = 0;
@@ -55,6 +59,32 @@ void AFPSAIGuard::OnHeardNoise(APawn* Pawn, const FVector& Location, float Volum
 void AFPSAIGuard::OnTimerResetRotation()
 {
     SetActorRotation(OriginRotator);
+
+    SetState(EAIGuardState::Idle);
+}
+
+void AFPSAIGuard::SetState(EAIGuardState NewState)
+{
+    switch (State)
+    {
+    case EAIGuardState::Idle:
+        if (NewState == EAIGuardState::Alerted || NewState == EAIGuardState::Suspicious)
+        {
+            State = NewState;
+            OnStateChanged(NewState);
+        }
+        break;
+
+    case EAIGuardState::Suspicious:
+        if (NewState == EAIGuardState::Alerted || NewState == EAIGuardState::Idle)
+        {
+            State = NewState;
+            OnStateChanged(NewState);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void AFPSAIGuard::Tick(float DeltaSeconds)
