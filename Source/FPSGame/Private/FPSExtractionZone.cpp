@@ -38,7 +38,7 @@ void AFPSExtractionZone::OnCompBeginOverlap(UPrimitiveComponent* OverlappedCompo
         auto mode = Cast<AFPSGameMode>(GetWorld()->GetAuthGameMode());
         if (mode)
         {
-            mode->MissionComplete(myChar);
+            mode->MissionComplete(myChar, true);
         }
     }
     else

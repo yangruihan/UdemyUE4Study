@@ -5,6 +5,8 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "TimerManager.h"
+#include "Engine/World.h"
+#include "FPSGameMode.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
@@ -29,6 +31,12 @@ void AFPSAIGuard::OnSeePawn(APawn* Pawn)
         return;
 
     DrawDebugSphere(GetWorld(), Pawn->GetActorLocation(), 32.0f, 12, FColor::Red, false, 10);
+
+    auto mode = Cast<AFPSGameMode>(GetWorld()->GetAuthGameMode());
+    if (mode)
+    {
+        mode->MissionComplete(Pawn, false);
+    }
 }
 
 void AFPSAIGuard::OnHeardNoise(APawn* Pawn, const FVector& Location, float Volume)
