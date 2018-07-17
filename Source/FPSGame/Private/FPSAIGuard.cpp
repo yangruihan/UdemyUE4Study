@@ -7,6 +7,8 @@
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "FPSGameMode.h"
+#include "AIController.h"
+#include "Engine/TargetPoint.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
@@ -16,13 +18,26 @@ AFPSAIGuard::AFPSAIGuard()
     SensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("SensingComp"));
     SensingComp->OnSeePawn.AddDynamic(this, &AFPSAIGuard::OnSeePawn);
     SensingComp->OnHearNoise.AddDynamic(this, &AFPSAIGuard::OnHeardNoise);
+
+    TargetIndex = -1;
 }
 
 // Called when the game starts or when spawned
 void AFPSAIGuard::BeginPlay()
 {
 	Super::BeginPlay();
+
+    AICtrl = Cast<AAIController>(GetController());
+    if (AICtrl)
+    {
+        AICtrl->ReceiveMoveCompleted.AddDynamic(this, &AFPSAIGuard::OnMovementCompleted);
+    }
+
     OriginRotator = GetActorRotation();
+
+    CurrentTargetPoint = GetNextTargetPoint();
+    if (CurrentTargetPoint)
+        MoveTo(CurrentTargetPoint);
 }
 
 void AFPSAIGuard::OnSeePawn(APawn* Pawn)
@@ -39,6 +54,8 @@ void AFPSAIGuard::OnSeePawn(APawn* Pawn)
     {
         mode->MissionComplete(Pawn, false);
     }
+
+    AICtrl->StopMovement();
 }
 
 void AFPSAIGuard::OnHeardNoise(APawn* Pawn, const FVector& Location, float Volume)
@@ -54,6 +71,8 @@ void AFPSAIGuard::OnHeardNoise(APawn* Pawn, const FVector& Location, float Volum
 
     GetWorldTimerManager().ClearTimer(TimerHanlder_ResetRotation);
     GetWorldTimerManager().SetTimer(TimerHanlder_ResetRotation, this, &AFPSAIGuard::OnTimerResetRotation, 3, false);
+
+    AICtrl->StopMovement();
 }
 
 void AFPSAIGuard::OnTimerResetRotation()
@@ -61,6 +80,9 @@ void AFPSAIGuard::OnTimerResetRotation()
     SetActorRotation(OriginRotator);
 
     SetState(EAIGuardState::Idle);
+
+    if (CurrentTargetPoint)
+        MoveTo(CurrentTargetPoint);
 }
 
 void AFPSAIGuard::SetState(EAIGuardState NewState)
@@ -84,6 +106,38 @@ void AFPSAIGuard::SetState(EAIGuardState NewState)
         break;
     default:
         break;
+    }
+}
+
+ATargetPoint* AFPSAIGuard::GetNextTargetPoint()
+{
+    auto num = TargetPoints.Num();
+
+    if (num > 0)
+    {
+        TargetIndex++;
+
+        if (num == 1 && TargetIndex == 1)
+            return nullptr;
+
+        return TargetPoints[TargetIndex % num];
+    }
+
+    return nullptr;
+}
+
+bool AFPSAIGuard::MoveTo(ATargetPoint* TargetPoint)
+{
+    return AICtrl->MoveToActor(TargetPoint, 30.0f) == EPathFollowingRequestResult::AlreadyAtGoal;
+}
+
+void AFPSAIGuard::OnMovementCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
+{
+    if (Result == EPathFollowingResult::Type::Success)
+    {
+        CurrentTargetPoint = GetNextTargetPoint();
+        if (CurrentTargetPoint)
+            MoveTo(CurrentTargetPoint);
     }
 }
 

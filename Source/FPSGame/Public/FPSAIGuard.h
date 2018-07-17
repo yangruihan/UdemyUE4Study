@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "FPSAIGuard.generated.h"
 
 class UPawnSensingComponent;
+class ATargetPoint;
+class AAIController;
 
 UENUM(BlueprintType)
 enum class EAIGuardState : uint8
@@ -53,6 +56,24 @@ protected:
 
     UFUNCTION(BlueprintImplementableEvent, Category = "AI")
     void OnStateChanged(EAIGuardState NewState);
+
+protected:
+
+    UPROPERTY(EditAnywhere, Category = "AI")
+    TArray<ATargetPoint*> TargetPoints;
+
+    AAIController* AICtrl;
+
+    ATargetPoint* CurrentTargetPoint;
+
+    int TargetIndex;
+
+    ATargetPoint* GetNextTargetPoint();
+
+    bool MoveTo(ATargetPoint* TargetPoint);
+
+    UFUNCTION()
+    void OnMovementCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
 
 public:
     virtual void Tick(float DeltaSeconds) override;
