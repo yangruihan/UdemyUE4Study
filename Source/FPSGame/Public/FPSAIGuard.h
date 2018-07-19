@@ -50,7 +50,11 @@ protected:
 
 protected:
 
+    UPROPERTY(ReplicatedUsing=OnRep_GuardState)
     EAIGuardState State;
+
+    UFUNCTION()
+    void OnRep_GuardState();
 
     void SetState(EAIGuardState NewState);
 

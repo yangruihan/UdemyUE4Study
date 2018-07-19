@@ -9,6 +9,7 @@
 #include "FPSGameMode.h"
 #include "AIController.h"
 #include "Engine/TargetPoint.h"
+#include "UnrealNetwork.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
@@ -85,6 +86,11 @@ void AFPSAIGuard::OnTimerResetRotation()
         MoveTo(CurrentTargetPoint);
 }
 
+void AFPSAIGuard::OnRep_GuardState()
+{
+    OnStateChanged(State);
+}
+
 void AFPSAIGuard::SetState(EAIGuardState NewState)
 {
     switch (State)
@@ -93,7 +99,7 @@ void AFPSAIGuard::SetState(EAIGuardState NewState)
         if (NewState == EAIGuardState::Alerted || NewState == EAIGuardState::Suspicious)
         {
             State = NewState;
-            OnStateChanged(NewState);
+            OnRep_GuardState();
         }
         break;
 
@@ -101,7 +107,7 @@ void AFPSAIGuard::SetState(EAIGuardState NewState)
         if (NewState == EAIGuardState::Alerted || NewState == EAIGuardState::Idle)
         {
             State = NewState;
-            OnStateChanged(NewState);
+            OnRep_GuardState();
         }
         break;
     default:
@@ -144,4 +150,11 @@ void AFPSAIGuard::OnMovementCompleted(FAIRequestID RequestID, EPathFollowingResu
 void AFPSAIGuard::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+}
+
+void AFPSAIGuard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(AFPSAIGuard, State);
 }
