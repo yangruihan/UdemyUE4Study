@@ -2,16 +2,23 @@
 
 #include "FPSGameState.h"
 #include "Engine/World.h"
+#include "FPSPlayerController.h"
 
 
 void AFPSGameState::MulticastOnMissionComplete_Implementation(APawn* InstigatorPawn, bool bMissionSuccess)
 {
-    for (auto It = GetWorld()->GetPawnIterator(); It; ++It)
+    for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
-        APawn* Pawn = It->Get();
-        if (Pawn && Pawn->IsLocallyControlled())
+        auto PlayerCtrl = Cast<AFPSPlayerController>(It->Get());
+        if (PlayerCtrl && PlayerCtrl->IsLocalController())
         {
-            Pawn->DisableInput(nullptr);
+            PlayerCtrl->OnMissionCompleted(InstigatorPawn, bMissionSuccess);
+
+            auto Pawn = PlayerCtrl->GetPawn();
+            if (Pawn)
+            {
+                 Pawn->DisableInput(nullptr);
+            }
         }
     }
 }

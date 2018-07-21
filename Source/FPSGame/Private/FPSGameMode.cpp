@@ -6,6 +6,7 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "FPSGameState.h"
+#include "Engine/World.h"
 
 AFPSGameMode::AFPSGameMode()
 {
@@ -19,9 +20,9 @@ AFPSGameMode::AFPSGameMode()
     GameStateClass = AFPSGameState::StaticClass();
 }
 
-void AFPSGameMode::MissionComplete(APawn* pawn, bool success)
+void AFPSGameMode::MissionComplete(APawn* InstigatorPawn, bool Success)
 {
-    if (pawn)
+    if (InstigatorPawn)
     {
         // Change view target
         TArray<AActor*> ViewTargets;
@@ -30,11 +31,17 @@ void AFPSGameMode::MissionComplete(APawn* pawn, bool success)
         if (ViewTargets.Num() > 0)
         {
             const auto viewTarget = ViewTargets[0];
-            auto characterCtrl = Cast<APlayerController>(pawn->GetController());
 
-            if (viewTarget && characterCtrl)
+            if (viewTarget)
             {
-                characterCtrl->SetViewTargetWithBlend(viewTarget, 0.8f, EViewTargetBlendFunction::VTBlend_Cubic);
+                for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+                {
+                    auto PlayerCtrl = It->Get();
+                    if (PlayerCtrl)
+                    {
+                        PlayerCtrl->SetViewTargetWithBlend(viewTarget, 0.8f, EViewTargetBlendFunction::VTBlend_Cubic);    
+                    }
+                }
             }
         }
         else
@@ -47,8 +54,8 @@ void AFPSGameMode::MissionComplete(APawn* pawn, bool success)
     if (GS)
     {
         // Disable character input
-        GS->MulticastOnMissionComplete(pawn, success);
+        GS->MulticastOnMissionComplete(InstigatorPawn, Success);
     }
 
-    OnMissionCompleted(pawn, success);
+    OnMissionCompleted(InstigatorPawn, Success);
 }
