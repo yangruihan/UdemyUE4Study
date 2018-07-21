@@ -5,6 +5,7 @@
 #include "FPSCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "FPSGameState.h"
 
 AFPSGameMode::AFPSGameMode()
 {
@@ -14,15 +15,14 @@ AFPSGameMode::AFPSGameMode()
 
 	// use our custom HUD class
 	HUDClass = AFPSHUD::StaticClass();
+
+    GameStateClass = AFPSGameState::StaticClass();
 }
 
 void AFPSGameMode::MissionComplete(APawn* pawn, bool success)
 {
     if (pawn)
     {
-        // Disable character input
-        pawn->DisableInput(nullptr);
-
         // Change view target
         TArray<AActor*> ViewTargets;
         UGameplayStatics::GetAllActorsOfClass(this, ViewTargetClass, ViewTargets);
@@ -41,6 +41,13 @@ void AFPSGameMode::MissionComplete(APawn* pawn, bool success)
         {
             UE_LOG(LogTemp, Log, TEXT("Viewtarget get error, please check ViewTargetClass set"));
         }
+    }
+
+    auto GS = GetGameState<AFPSGameState>();
+    if (GS)
+    {
+        // Disable character input
+        GS->MulticastOnMissionComplete(pawn, success);
     }
 
     OnMissionCompleted(pawn, success);
